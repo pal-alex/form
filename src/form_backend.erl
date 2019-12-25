@@ -1,17 +1,27 @@
 -module(form_backend).
 -compile(export_all).
--include_lib("nitro/include/calendar.hrl").
--include_lib("nitro/include/comboLookup.hrl").
+% -include_lib("nitro/include/calendar.hrl").
+% -include_lib("nitro/include/comboLookup.hrl").
 -include_lib("nitro/include/nitro.hrl").
 -include_lib("form/include/formReg.hrl").
 -include_lib("form/include/step_wizard.hrl").
 -include_lib("form/include/meta.hrl").
 
+
+sources([Type|Other], Options) ->
+   Kind = form:kind(Options),
+   M = lists:map(fun({Field, _Value}) -> list_to_atom(form:atom([Field, Type, Kind]));
+                     (Field) -> list_to_atom(form:atom([Field, Type, Kind])) 
+                 end, Other),
+   M;
 sources(Object,Options) ->
-   M = lists:map(fun(X) -> list_to_atom(form:atom([X,form:type(Object),form:kind(Options)])) end, element(5,kvs:table(form:type(Object)))),
+   Type = form:type(Object),
+   Kind = form:kind(Options),
+   M = lists:map(fun(X) -> list_to_atom(form:atom([X, Type, Kind])) end, element(5,kvs:table(form:type(Object)))),
 %   io:format("sources: ~p~n",[M]),
    M.
 
+type([H|_]) -> H;
 type(O) -> element(1,O).
 
 kind(Options) ->
@@ -27,8 +37,9 @@ pos(Object,X) ->
 %   io:format("pos: ~p~n",[{Object,X}]),
    P.
 
-extract(Object,X) ->
-%   io:format("extract: ~p~n",[{Object,X}]),
+extract(Object, X) when is_list(Object) -> proplists:get_value(X#field.id, Object);
+extract(Object, X) ->
+%  io:format("extract: ~p~n",[{Object,X}]),
    element(form:pos(Object,X),Object).
 
 evoke(Object,X,Value) ->
